@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой сайт с Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .post {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Мой блог</h1>
+    
+    <div class="container">
+        <h2>Добавить запись</h2>
+        <input type="text" id="title" placeholder="Заголовок">
+        <textarea id="content" placeholder="Текст записи"></textarea>
+        <button onclick="addPost()">Опубликовать</button>
+    </div>
+    
+    <div class="container">
+        <h2>Последние записи</h2>
+        <div id="posts"></div>
+    </div>
+
+    <!-- Подключаем Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Инициализация Supabase
+        const supabaseUrl = 'https://pedqcyetptmtpgmlmxhs.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlZHFjeWV0cHRtdHBnbWxteGhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NzYwNDQsImV4cCI6MjA2MzI1MjA0NH0.9lN5rmiIVJJFfQBER6DQ9-ACZb74VFPPPJQjucphn4E'
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+        // Загрузка постов при загрузке страницы
+        document.addEventListener('DOMContentLoaded', loadPosts)
+
+        async function loadPosts() {
+            const { data, error } = await supabase
+                .from('posts') // Замените 'posts' на вашу таблицу
+                .select('*')
+                .order('created_at', { ascending: false })
+            
+            if (error) {
+                console.error('Ошибка:', error)
+                return
+            }
+            
+            const postsContainer = document.getElementById('posts')
+            postsContainer.innerHTML = ''
+            
+            data.forEach(post => {
+                const postElement = document.createElement('div')
+                postElement.className = 'post'
+                postElement.innerHTML = `
+                    <h3>${post.title}</h3>
+                    <p>${post.content}</p>
+                    <small>${new Date(post.created_at).toLocaleString()}</small>
+                `
+                postsContainer.appendChild(postElement)
+            })
+        }
+
+        async function addPost() {
+            const title = document.getElementById('title').value
+            const content = document.getElementById('content').value
+            
+            const { error } = await supabase
+                .from('posts') // Замените 'posts' на вашу таблицу
+                .insert([{ title, content }])
+            
+            if (error) {
+                console.error('Ошибка:', error)
+                alert('Не удалось добавить запись')
+            } else {
+                loadPosts()
+                document.getElementById('title').value = ''
+                document.getElementById('content').value = ''
+            }
+        }
+    </script>
+</body>
+</html>
